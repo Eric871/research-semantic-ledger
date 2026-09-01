@@ -17,6 +17,12 @@
     "conformance_run": "https://github.com/Eric871/research-semantic-ledger/actions/runs/33460073495",
     "conformance_conclusion": "success"
   },
+  "latest_validated_implementation": {
+    "version": "0.3.0",
+    "commit": "c43969f7c03cd3b7bccf72440d2c57a8f3b65c88",
+    "conformance_run": "https://github.com/Eric871/research-semantic-ledger/actions/runs/33464835550",
+    "conformance_conclusion": "success"
+  },
   "license": {
     "status": "selected",
     "spdx_id": "Apache-2.0"
