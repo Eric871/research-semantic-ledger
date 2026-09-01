@@ -4,6 +4,22 @@
 
 Research Semantic Ledger is an experimental, evidence-first pipeline for turning research transcripts and reports into reviewable semantic candidates. It preserves source anchors, resolves document context occurrence by occurrence, extracts atomic claims and local narrative relations, applies deterministic quality gates, and routes every candidate to a human audit interface before promotion.
 
+## Five-minute Agent start
+
+Requirements: Git and Python 3.11 or newer. The public workflow has no third-party dependencies and needs no API key.
+
+```bash
+git clone https://github.com/Eric871/research-semantic-ledger.git
+cd research-semantic-ledger
+python -m research_semantic_ledger doctor
+python -m research_semantic_ledger summary examples/synthetic-group-reference.json
+python -m unittest discover -s tests -v
+```
+
+Coding agents should read [`AGENTS.md`](AGENTS.md) automatically; `CLAUDE.md` points Claude Code to the same guide. A copyable onboarding prompt is available in [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md).
+
+The checkout works immediately for fixture validation, structural summaries, environment diagnosis, and dependency-free regression tests. Private full-document extraction, provider calls, audit data, and database promotion are separate capability tiers and are not silently enabled.
+
 ## Why this project exists
 
 Conventional retrieval pipelines can find relevant paragraphs while still losing critical meaning:
@@ -56,7 +72,7 @@ These are aggregate internal experiment results. The licensed source, provider p
 
 ## Safe public example
 
-The repository preparation bundle includes a fully synthetic group-reference fixture under [`examples/`](examples/). It demonstrates plural and complement-group semantics without distributing licensed research text.
+The repository includes a fully synthetic entity-set fixture under [`examples/`](examples/). It demonstrates the public contract without distributing licensed research text.
 
 ## Reproducibility levels
 

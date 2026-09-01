@@ -6,11 +6,14 @@ Research Semantic Ledger separates deterministic replay from nondeterministic pr
 
 Requirements: Python 3.11 or newer; no third-party Python packages.
 
-```powershell
-python scripts/validate_synthetic_fixture.py
+```bash
+python -m research_semantic_ledger doctor
+python -m research_semantic_ledger validate examples/synthetic-group-reference.json
+python -m research_semantic_ledger summary examples/synthetic-group-reference.json
+python -m unittest discover -s tests -v
 ```
 
-This validates evidence spans, entity-set membership, scope exclusions, claim references, and relation endpoints in the public-safe fixture. It demonstrates contracts and gates, not model quality.
+These commands diagnose the checkout, validate evidence spans and relation endpoints, emit a structural summary, and run fail-closed regressions. The legacy command `python scripts/validate_synthetic_fixture.py` remains supported. This demonstrates contracts and gates, not model quality.
 
 ## Level 2: internal offline replay
 
@@ -42,7 +45,7 @@ The runner must:
 
 ## Current public-export status
 
-The dependency-free synthetic conformance check passes both in the working tree and in a fresh clone of the empty target repository. This is the only public reproduction claim made by the initial export.
+The dependency-free Agent quick start passes in the working tree, the standalone repository, and GitHub Actions. This is the public reproduction claim made by the current MVP.
 
 The provider runners, licensed source, provider payloads, human Gold, audit database, and dashboard are intentionally deferred. Their existing internal implementations still have machine-specific paths and private-artifact dependencies; each component requires a separate portability and publication review before it can be added.
 

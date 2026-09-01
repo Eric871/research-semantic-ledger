@@ -12,4 +12,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: python -m research_semantic_ledger doctor
+      - run: python -m research_semantic_ledger validate examples/synthetic-group-reference.json
+      - run: python -m research_semantic_ledger summary examples/synthetic-group-reference.json
       - run: python scripts/validate_synthetic_fixture.py
+      - run: python -m unittest discover -s tests -v

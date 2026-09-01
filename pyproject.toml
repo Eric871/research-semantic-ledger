@@ -1,11 +1,21 @@
 [project]
 name = "research-semantic-ledger"
-version = "0.0.0"
+version = "0.1.0"
 description = "Auditable extraction of atomic claims and narrative relations from long-form research documents."
 requires-python = ">=3.11"
 license = "Apache-2.0"
 dependencies = []
 
+[project.scripts]
+rsl = "research_semantic_ledger.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["research_semantic_ledger*"]
+
 [tool.research-semantic-ledger]
-release_status = "preparation_in_progress"
+release_status = "agent_ready_public_mvp"
 formal_database_writes = 0

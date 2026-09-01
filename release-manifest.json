@@ -5,12 +5,12 @@
     "repository_slug": "research-semantic-ledger",
     "tagline": "Auditable extraction of atomic claims and narrative relations from long-form research documents."
   },
-  "status": "minimal_public_export_published",
+  "status": "agent_ready_public_mvp",
   "as_of": "2026-09-01",
   "remote_url": "https://github.com/Eric871/research-semantic-ledger",
   "remote_visibility": "public",
   "remote_state": "published",
-  "public_export_file_count": 13,
+  "public_export_file_count": 21,
   "publication": {
     "initial_commit": "011756617999244bf52236f368345b53a845c1ae",
     "branch": "main",
@@ -76,6 +76,10 @@
     "first_push_authorized",
     "first_push_completed",
     "remote_head_verified",
-    "github_actions_conformance_passed"
+    "github_actions_conformance_passed",
+    "cross_agent_operating_guide_added",
+    "dependency_free_cli_added",
+    "agent_doctor_added",
+    "fail_closed_unit_tests_added"
   ]
 }

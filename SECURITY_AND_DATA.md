@@ -10,7 +10,7 @@
 
 ## Credential handling
 
-Credentials must be injected at runtime. The current Windows workflow reads provider secrets from Windows Credential Manager, places them in process-scoped environment variables, and removes those variables after execution. A future cross-platform release may add another secret backend, but plaintext credentials remain forbidden.
+The public Agent quick start requires no credentials. If a future authorized workflow adds a provider, credentials must be injected at runtime and never written into repository files, prompts, fixtures, logs, or committed shell history.
 
 ## Data tiers
 
