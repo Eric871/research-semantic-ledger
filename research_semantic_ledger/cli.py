@@ -127,6 +127,15 @@ def _default_output_dir(source: Path) -> Path:
 
 def _extract(args: argparse.Namespace) -> int:
     output_dir = args.output_dir or _default_output_dir(args.path)
+    if not args.dry_run and not args.authorize_external_send:
+        _emit(
+            {
+                "status": "fail",
+                "errors": ["online_extraction_requires_--authorize-external-send"],
+            },
+            stream=sys.stderr,
+        )
+        return 2
     if output_dir.exists() and any(output_dir.iterdir()):
         _emit({"status": "fail", "errors": [f"output_directory_not_empty:{output_dir}"]}, stream=sys.stderr)
         return 2
@@ -162,15 +171,6 @@ def _extract(args: argparse.Namespace) -> int:
                 }
             )
             return 0
-        if not args.authorize_external_send:
-            _emit(
-                {
-                    "status": "fail",
-                    "errors": ["online_extraction_requires_--authorize-external-send"],
-                },
-                stream=sys.stderr,
-            )
-            return 2
         provider = DeepSeekProvider(
             endpoint=args.endpoint,
             model=args.model,
