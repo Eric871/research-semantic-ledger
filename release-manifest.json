@@ -19,10 +19,20 @@
   },
   "latest_validated_implementation": {
     "version": "0.3.0",
-    "commit": "c43969f7c03cd3b7bccf72440d2c57a8f3b65c88",
-    "conformance_run": "https://github.com/Eric871/research-semantic-ledger/actions/runs/33464835550",
+    "commit": "9d6f300522fe4553bb5dae1700e4c9475fde55a0",
+    "conformance_run": "https://github.com/Eric871/research-semantic-ledger/actions/runs/33464976007",
     "conformance_conclusion": "success"
   },
+  "fixed_incidents": [
+    {
+      "incident_id": "RSL-CI-20260901-001",
+      "symptom": "The no-authorization regression observed an output-directory collision when a dry-run created the same timestamped path first.",
+      "root_cause": "Output-path validation ran before the mandatory external-send authorization gate.",
+      "fix": "Online authorization is now checked before output-path inspection.",
+      "regression_test": "test_cli_refuses_online_send_without_explicit_authorization",
+      "validated_by": "https://github.com/Eric871/research-semantic-ledger/actions/runs/33464976007"
+    }
+  ],
   "license": {
     "status": "selected",
     "spdx_id": "Apache-2.0"
