@@ -10,10 +10,11 @@ Requirements: Python 3.11 or newer; no third-party Python packages.
 python -m research_semantic_ledger doctor
 python -m research_semantic_ledger validate examples/synthetic-group-reference.json
 python -m research_semantic_ledger summary examples/synthetic-group-reference.json
+python -m research_semantic_ledger render examples/synthetic-group-reference.json --output outputs/example.md
 python -m unittest discover -s tests -v
 ```
 
-These commands diagnose the checkout, validate evidence spans and relation endpoints, emit a structural summary, and run fail-closed regressions. The legacy command `python scripts/validate_synthetic_fixture.py` remains supported. This demonstrates contracts and gates, not model quality.
+These commands diagnose the checkout, validate evidence spans and relation endpoints, emit JSON and Markdown projections, and run fail-closed regressions. The generated Markdown is derived from validated JSON; the JSON remains canonical. The legacy command `python scripts/validate_synthetic_fixture.py` remains supported. This demonstrates contracts and gates, not model quality.
 
 ## Level 2: internal offline replay
 

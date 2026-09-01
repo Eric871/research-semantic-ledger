@@ -10,7 +10,7 @@
   "remote_url": "https://github.com/Eric871/research-semantic-ledger",
   "remote_visibility": "public",
   "remote_state": "published",
-  "public_export_file_count": 21,
+  "public_export_file_count": 22,
   "publication": {
     "initial_commit": "011756617999244bf52236f368345b53a845c1ae",
     "branch": "main",
@@ -80,6 +80,7 @@
     "cross_agent_operating_guide_added",
     "dependency_free_cli_added",
     "agent_doctor_added",
-    "fail_closed_unit_tests_added"
+    "fail_closed_unit_tests_added",
+    "validated_json_to_markdown_renderer_added"
   ]
 }

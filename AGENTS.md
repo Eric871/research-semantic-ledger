@@ -13,6 +13,7 @@ Python 3.11 or newer is the only runtime requirement. Do not install dependencie
 - Doctor: `python -m research_semantic_ledger doctor`
 - Validate: `python -m research_semantic_ledger validate <ledger.json>`
 - Summarize: `python -m research_semantic_ledger summary <ledger.json>`
+- Render Markdown: `python -m research_semantic_ledger render <ledger.json> --output <ledger.md>`
 - Tests: `python -m unittest discover -s tests -v`
 - Legacy fixture check: `python scripts/validate_synthetic_fixture.py`
 

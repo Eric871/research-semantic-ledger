@@ -134,11 +134,16 @@ def validate_document(data: Any) -> ValidationResult:
     )
 
 
-def validate_path(path: Path) -> ValidationResult:
+def load_and_validate_path(path: Path) -> tuple[Any | None, ValidationResult]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return ValidationResult((f"file_not_found:{path}",), {})
+        return None, ValidationResult((f"file_not_found:{path}",), {})
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        return ValidationResult((f"file_read_error:{type(exc).__name__}",), {})
-    return validate_document(data)
+        return None, ValidationResult((f"file_read_error:{type(exc).__name__}",), {})
+    return data, validate_document(data)
+
+
+def validate_path(path: Path) -> ValidationResult:
+    _, result = load_and_validate_path(path)
+    return result

@@ -7,6 +7,7 @@ import sys
 import unittest
 from pathlib import Path
 
+from research_semantic_ledger.rendering import render_document
 from research_semantic_ledger.validation import validate_document, validate_path
 
 
@@ -68,6 +69,49 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         payload = json.loads(completed.stdout)
         self.assertEqual(payload["status"], "fail")
+
+    def test_markdown_renderer_preserves_claims_and_evidence(self) -> None:
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        markdown = render_document(data)
+        self.assertIn("# Semantic Ledger: SYNTHETIC-GROUP-001", markdown)
+        self.assertIn("## Claims", markdown)
+        self.assertIn("`C-001`", markdown)
+        self.assertIn("> **L1:** Alpha Optics", markdown)
+        self.assertIn("## Narrative relations", markdown)
+        self.assertIn("## Source lines", markdown)
+
+    def test_render_command_writes_markdown_to_stdout(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "-m", "research_semantic_ledger", "render", FIXTURE.as_posix()],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertTrue(completed.stdout.startswith("# Semantic Ledger"))
+
+    def test_render_command_does_not_overwrite_without_force(self) -> None:
+        readme = ROOT / "README.md"
+        before = readme.read_bytes()
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "research_semantic_ledger",
+                "render",
+                FIXTURE.as_posix(),
+                "--output",
+                readme.as_posix(),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 2)
+        self.assertEqual(readme.read_bytes(), before)
+        self.assertEqual(json.loads(completed.stderr)["status"], "fail")
 
 
 if __name__ == "__main__":

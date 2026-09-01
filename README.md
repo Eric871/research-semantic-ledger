@@ -13,12 +13,30 @@ git clone https://github.com/Eric871/research-semantic-ledger.git
 cd research-semantic-ledger
 python -m research_semantic_ledger doctor
 python -m research_semantic_ledger summary examples/synthetic-group-reference.json
+python -m research_semantic_ledger render examples/synthetic-group-reference.json --output outputs/example.md
 python -m unittest discover -s tests -v
 ```
 
 Coding agents should read [`AGENTS.md`](AGENTS.md) automatically; `CLAUDE.md` points Claude Code to the same guide. A copyable onboarding prompt is available in [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md).
 
-The checkout works immediately for fixture validation, structural summaries, environment diagnosis, and dependency-free regression tests. Private full-document extraction, provider calls, audit data, and database promotion are separate capability tiers and are not silently enabled.
+The checkout works immediately for fixture validation, structural summaries, Markdown rendering, environment diagnosis, and dependency-free regression tests. Private full-document extraction, provider calls, audit data, and database promotion are separate capability tiers and are not silently enabled.
+
+## Output formats
+
+JSON is the canonical machine-readable ledger. Markdown is a deterministic human-readable projection and should not be edited as the source of truth.
+
+```bash
+# Print Markdown to stdout
+python -m research_semantic_ledger render ledger.json
+
+# Write a UTF-8 Markdown file; existing files are protected by default
+python -m research_semantic_ledger render ledger.json --output outputs/ledger.md
+
+# Replace an existing output only when explicitly intended
+python -m research_semantic_ledger render ledger.json --output outputs/ledger.md --force
+```
+
+The generated document contains a summary, entity-set bindings, claims with quoted evidence lines, narrative relations, and a numbered source appendix. Invalid JSON or an invalid ledger fails closed without producing Markdown.
 
 ## Why this project exists
 
