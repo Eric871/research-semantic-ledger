@@ -1,0 +1,64 @@
+{
+  "schema_version": "research_semantic_ledger_synthetic_fixture_v0.1",
+  "synthetic": true,
+  "document": {
+    "document_id": "SYNTHETIC-GROUP-001",
+    "lines": [
+      "Alpha Optics plans to expand annual capacity to 40 units by 2027.",
+      "Beta Photonics plans to expand annual capacity to 70 units by 2027.",
+      "The two companies therefore expect their planned-capacity gap to narrow.",
+      "Other small vendors using the same equipment still face design, sampling, and yield challenges and are unlikely to break through in the short term."
+    ]
+  },
+  "group_bindings": [
+    {
+      "binding_id": "G-001",
+      "surface": "The two companies",
+      "source_line": 3,
+      "resolution_status": "resolved_group",
+      "member_ids": ["ORG-ALPHA", "ORG-BETA"],
+      "member_names": ["Alpha Optics", "Beta Photonics"],
+      "excluded_ids": []
+    },
+    {
+      "binding_id": "G-002",
+      "surface": "Other small vendors using the same equipment",
+      "source_line": 4,
+      "resolution_status": "unresolved_group_members",
+      "member_ids": [],
+      "member_names": [],
+      "excluded_ids": ["ORG-ALPHA", "ORG-BETA"]
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C-001",
+      "group_binding_id": "G-001",
+      "predicate": "expects planned-capacity gap to narrow",
+      "evidence_lines": [1, 2, 3]
+    },
+    {
+      "claim_id": "C-002",
+      "group_binding_id": "G-002",
+      "predicate": "is unlikely to break through in the short term",
+      "object": "design, sampling, and yield challenges",
+      "evidence_lines": [4]
+    }
+  ],
+  "relations": [
+    {
+      "relation_id": "R-001",
+      "relation_type": "supports_comparison",
+      "source_claim_ids": [],
+      "target_claim_ids": ["C-001"],
+      "evidence_lines": [1, 2, 3]
+    },
+    {
+      "relation_id": "R-002",
+      "relation_type": "causal_support",
+      "source_claim_ids": [],
+      "target_claim_ids": ["C-002"],
+      "evidence_lines": [4]
+    }
+  ]
+}

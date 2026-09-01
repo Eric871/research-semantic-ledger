@@ -1,0 +1,72 @@
+{
+  "schema_version": "research_semantic_ledger_release_manifest_v0.1",
+  "project": {
+    "display_name": "Research Semantic Ledger",
+    "repository_slug": "research-semantic-ledger",
+    "tagline": "Auditable extraction of atomic claims and narrative relations from long-form research documents."
+  },
+  "status": "minimal_public_export_approved_for_first_push",
+  "as_of": "2026-09-01",
+  "remote_url": "https://github.com/Eric871/research-semantic-ledger",
+  "remote_visibility": "public",
+  "remote_state": "empty",
+  "public_export_file_count": 13,
+  "license": {
+    "status": "selected",
+    "spdx_id": "Apache-2.0"
+  },
+  "public_safe_fixture": "examples/synthetic-group-reference.json",
+  "public_export_allowlist": [
+    "."
+  ],
+  "internal_components_pending_public_audit": [
+    "provider adapters and online runners",
+    "prompt and semantic contracts",
+    "full-document evaluation scripts",
+    "human Gold and audit batches",
+    "audit dashboard",
+    "licensed source and provider artifacts"
+  ],
+  "mandatory_excludes": [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/.vinext/**",
+    "**/.wrangler/**",
+    "**/dist/**",
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+    "**/.env",
+    "**/.env.*",
+    "!**/.env.example",
+    "outputs/**",
+    "research/**/source-materials/**",
+    "research/**/parsed/**",
+    "**/*.db",
+    "**/*.sqlite*"
+  ],
+  "never_export": [
+    "D:/CodexData/projects/industry-world-model/outputs",
+    "licensed source text",
+    "raw provider payloads containing source text",
+    "credential exports",
+    "local audit databases"
+  ],
+  "push_blockers": [],
+  "completed_preparation": [
+    "project_name_selected",
+    "obvious_name_collision_search_completed",
+    "common_secret_pattern_scan_passed",
+    "nested_git_and_dependency_directories_identified",
+    "public_safe_synthetic_fixture_added",
+    "security_and_reproducibility_boundaries_documented",
+    "remote_url_received",
+    "remote_public_visibility_confirmed",
+    "remote_empty_state_confirmed",
+    "minimal_public_export_built",
+    "dependency_free_synthetic_conformance_passed",
+    "fresh_empty_repository_clone_conformance_passed",
+    "apache_2_0_license_selected",
+    "first_push_authorized"
+  ]
+}
