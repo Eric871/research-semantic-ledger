@@ -1,6 +1,6 @@
 # Reproducibility
 
-Research Semantic Ledger separates deterministic replay from nondeterministic provider inference.
+Research Semantic Ledger separates deterministic preparation and validation from nondeterministic provider inference.
 
 ## Level 1: synthetic conformance
 
@@ -8,46 +8,70 @@ Requirements: Python 3.11 or newer; no third-party Python packages.
 
 ```bash
 python -m research_semantic_ledger doctor
-python -m research_semantic_ledger validate examples/synthetic-group-reference.json
-python -m research_semantic_ledger summary examples/synthetic-group-reference.json
-python -m research_semantic_ledger render examples/synthetic-group-reference.json --output outputs/example.md
+python -m research_semantic_ledger validate examples/synthetic-extracted-ledger.json
+python -m research_semantic_ledger evaluate examples/synthetic-extracted-ledger.json --gold examples/synthetic-extraction-gold.json
+python -m research_semantic_ledger render examples/synthetic-extracted-ledger.json --output outputs/example.md
 python -m unittest discover -s tests -v
 ```
 
-These commands diagnose the checkout, validate evidence spans and relation endpoints, emit JSON and Markdown projections, and run fail-closed regressions. The generated Markdown is derived from validated JSON; the JSON remains canonical. The legacy command `python scripts/validate_synthetic_fixture.py` remains supported. This demonstrates contracts and gates, not model quality.
+These commands validate exact evidence, binding states, relation endpoints, the closed relation vocabulary, source-line dispositions, public Gold, and deterministic Markdown rendering. This demonstrates contracts and gates, not provider quality.
 
-## Level 2: internal offline replay
+## Level 2: extraction preflight
 
-The internal replay starts from preserved provider responses and frozen manifests. It can deterministically reproduce normalization, ID namespacing, cue accounting, evaluation, and audit-bundle generation.
+```bash
+python -m research_semantic_ledger extract path/to/document.md --dry-run
+```
 
-The private artifact pack must include:
+Preflight normalizes UTF-8 newlines, records original and normalized SHA-256 values, freezes line anchors and chunk boundaries, records Prompt hashes and model settings, and makes zero network calls. Documents larger than the configured context boundary fail before transmission.
+
+## Level 3: online DeepSeek extraction
+
+Online extraction requires an explicitly authorized source, endpoint, model, credential, and call/cost ceiling as appropriate.
+
+```bash
+python -m research_semantic_ledger extract path/to/document.md \
+  --authorize-external-send \
+  --model deepseek-v4-flash \
+  --max-calls 100
+```
+
+The runner:
+
+1. freezes source, chunk, Prompt, model, and budget lineage;
+2. builds a document frame before occurrence-level extraction;
+3. records every request, response, usage receipt, finish reason, and observed model locally;
+4. forbids automatic retries;
+5. requires an explicit split response rather than accepting truncated chunks;
+6. validates exact evidence, binding states, atomicity fields, relation endpoints, relation vocabulary, and line dispositions;
+7. writes a candidate JSON ledger and deterministic Markdown projection;
+8. performs zero formal database writes.
+
+This is procedural reproduction, not byte-for-byte reproduction. Hosted-model behavior may change even when the visible model name and Prompt are unchanged.
+
+If `--max-cost-cny` is used, current input and output prices must also be supplied. The project does not hard-code a price that may become stale.
+
+## Level 4: private semantic audit
+
+Auditing a licensed document requires a private artifact pack containing:
 
 - immutable source plus SHA-256;
-- chunk and cue manifests;
-- prompt and provider contracts;
+- chunk and source-line manifests;
+- exact Prompt and provider contracts;
 - raw provider responses and usage receipts;
-- validator and repair versions;
-- expected result hashes.
+- validator versions and validation receipts;
+- human Gold frozen before judging model output;
+- expected result hashes and adjudication notes.
 
-Licensed source text and raw provider payloads are intentionally absent from the GitHub preparation bundle. The future repository should accept their location through configuration rather than hard-coded machine paths.
+Licensed source text, source-bearing provider payloads, reviewer identities, private Gold, and audit databases must remain outside the public repository.
 
-## Level 3: online provider replay
+## What can and cannot be reproduced
 
-Online replay requires an explicitly authorized provider, model, endpoint, credential, and cost ceiling. It is a procedural reproduction, not a byte-for-byte reproduction: hosted model behavior may change even when the visible model name and prompt are unchanged.
-
-The runner must:
-
-1. freeze the exact source and contract hashes;
-2. estimate and enforce the cost ceiling before the request;
-3. record request, response, provider usage, finish reason, and observed model ID;
-4. forbid blind retries;
-5. keep provider, JSON-contract, and semantic-Gold gates separate;
-6. write zero formal database records without a separate promotion authorization.
-
-## Current public-export status
-
-The dependency-free Agent quick start passes in the working tree, the standalone repository, and GitHub Actions. This is the public reproduction claim made by the current MVP.
-
-The provider runners, licensed source, provider payloads, human Gold, audit database, and dashboard are intentionally deferred. Their existing internal implementations still have machine-specific paths and private-artifact dependencies; each component requires a separate portability and publication review before it can be added.
-
-The owner selected Apache-2.0 and authorized the first minimal push. Initial commit `0117566` was published to `main`, and GitHub Actions conformance run `33460073495` completed successfully. The release evidence is tracked in `release-manifest.json`.
+| Capability | Current status |
+|---|---|
+| Public synthetic validation, Gold, tests, and Markdown | Deterministically reproducible |
+| Source hashing and chunk preflight | Deterministically reproducible |
+| DeepSeek request procedure and receipts | Runnable with authorization and credentials |
+| Exact provider output | Nondeterministic; not promised |
+| Internal single-document aggregate metrics | Reported, but licensed artifacts are private |
+| General unseen-document semantic accuracy | Unproven |
+| Automatic database promotion | Not implemented |

@@ -1,0 +1,91 @@
+You extract occurrence-level reference bindings, atomic claims, and local narrative relations from one frozen chunk of a research document.
+
+The document frame is context, not evidence. The numbered source lines are the only evidence. The objective is faithful reconstruction, not truth verification.
+
+Reference rules:
+1. Resolve each pronoun, generic organization word, role phrase, demonstrative, and plural reference independently.
+2. Prefer explicit same-sentence identity, then nearest compatible antecedent, then the current discourse segment. Never replace every occurrence of "company" or 公司 with one entity.
+3. Use resolution_status "resolved" only for exactly one entity and "group_resolved" only for two or more explicit members. Use "class_not_unique", "ambiguous", or "unresolved" otherwise.
+4. For unresolved states, canonical_entity_ids must be empty. Do not guess.
+5. Preserve the surface text and exact evidence line numbers.
+
+Atomic-claim rules:
+1. One claim may contain only one independently disputable proposition.
+2. Preserve modality, epistemic status, time surface, scope, condition, metric, value, and unit when present.
+3. Predictions, plans, possibilities, evaluations, causal claims, and conditions must not be rewritten as confirmed facts.
+4. canonical_subject must identify a real entity, event, role, group, product, technology, metric, or proposition. It must not remain a vague pronoun unless canonical_subject is listed in unresolved_fields.
+5. Copy one or more short evidence_quotes exactly from the cited source lines. Never retype an approximate quote.
+6. Use only binding IDs emitted in the same chunk. Unknown fields are null and listed in unresolved_fields when material.
+
+Narrative-relation rules:
+1. Relations connect claim IDs; do not duplicate claim text in a relation.
+2. Use only this closed relation vocabulary:
+   causes, enables, constrains, qualifies, depends_on, compares, contrasts,
+   supports, precedes, elaborates, exemplifies.
+3. Direction is always source -> target. For causes, the source is the cause and the target is the effect. For supports, the source is evidence/reason and the target is the supported conclusion. For precedes, the source is earlier. For qualifies, the source is the qualifier or boundary and the target is the limited claim.
+4. Do not create a relation merely because two claims are adjacent. If the relation is uncertain, omit it and retain the claims.
+5. Every relation needs exact evidence line numbers. Preserve explicit conditions.
+
+Coverage rules:
+1. Every nonblank input line must appear exactly once in segment_dispositions.
+2. A disposition is consumed, ignored_with_reason, or unresolved_for_replay.
+3. If more than 24 atomic claims are needed, return split_required=true, zero bindings/claims/relations/dispositions, and a valid split_after_line. Do not truncate.
+4. Return exactly one JSON object, with no Markdown fence or explanatory prose.
+
+Required JSON shape:
+{
+  "chunk_id":"string",
+  "mention_bindings":[{
+    "binding_id":"string",
+    "surface":"string",
+    "evidence_lines":[1],
+    "resolution_status":"resolved|group_resolved|class_not_unique|ambiguous|unresolved",
+    "canonical_entity_ids":["string"],
+    "canonical_names":["string"],
+    "discourse_role_id":"string or null",
+    "resolution_scope":"sentence|paragraph|question_answer|discourse_block|document",
+    "resolution_basis":"string",
+    "confidence":"high|medium|low"
+  }],
+  "claims":[{
+    "claim_id":"string",
+    "surface_subject":"string or null",
+    "canonical_subject":"string or null",
+    "subject_kind":"entity|event|role|group|product|technology|metric|proposition|unknown",
+    "predicate":"string",
+    "object":"string or null",
+    "record_family":"observation|metric|event|comparison|causal_claim|forecast|plan|evaluation|constraint|other",
+    "claim_kind":"fact|reported_fact|forecast|plan|possibility|evaluation|causal_claim|requirement|unknown",
+    "modality":"asserted|possible|likely|unlikely|required|conditional|unknown",
+    "epistemic_status":"confirmed_by_source|reported|speaker_assessment|hypothesis|uncertain",
+    "time_surface":"string or null",
+    "metric":"string or null",
+    "value":"number|string|null",
+    "unit":"string or null",
+    "scope":"string or null",
+    "condition":"string or null",
+    "evidence_lines":[1],
+    "evidence_quotes":["exact substring"],
+    "mention_binding_ids":["string"],
+    "unresolved_fields":["string"]
+  }],
+  "relations":[{
+    "relation_id":"string",
+    "relation_type":"causes|enables|constrains|qualifies|depends_on|compares|contrasts|supports|precedes|elaborates|exemplifies",
+    "source_claim_ids":["string"],
+    "target_claim_ids":["string"],
+    "condition":"string or null",
+    "evidence_lines":[1],
+    "unresolved_fields":["string"]
+  }],
+  "segment_dispositions":[{
+    "source_lines":[1],
+    "status":"consumed|ignored_with_reason|unresolved_for_replay",
+    "claim_ids":["string"],
+    "relation_ids":["string"],
+    "reason":"string or null"
+  }],
+  "split_required":false,
+  "split_after_line":null,
+  "unresolved_items":[{"description":"string","source_lines":[1]}]
+}

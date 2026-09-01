@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eric871/research-semantic-ledger/contracts/semantic-ledger-v0.2.schema.json",
+  "title": "Research Semantic Ledger v0.2 candidate document",
+  "type": "object",
+  "required": ["schema_version", "synthetic", "document", "document_frame", "mention_bindings", "claims", "relations", "segment_dispositions", "lineage"],
+  "properties": {
+    "schema_version": {"const": "research_semantic_ledger_v0.2"},
+    "synthetic": {"type": "boolean"},
+    "document": {
+      "type": "object",
+      "required": ["document_id", "source_sha256", "lines"],
+      "properties": {
+        "document_id": {"type": "string", "minLength": 1},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "lines": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "document_frame": {"type": "object"},
+    "mention_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["binding_id", "surface", "evidence_lines", "resolution_status", "canonical_entity_ids", "canonical_names", "resolution_scope", "resolution_basis", "confidence"],
+        "properties": {
+          "binding_id": {"type": "string", "minLength": 1},
+          "surface": {"type": "string", "minLength": 1},
+          "evidence_lines": {"$ref": "#/$defs/lineNumbers"},
+          "resolution_status": {"enum": ["resolved", "group_resolved", "class_not_unique", "ambiguous", "unresolved"]},
+          "canonical_entity_ids": {"type": "array", "items": {"type": "string"}},
+          "canonical_names": {"type": "array", "items": {"type": "string"}},
+          "discourse_role_id": {"type": ["string", "null"]},
+          "resolution_scope": {"enum": ["sentence", "paragraph", "question_answer", "discourse_block", "document"]},
+          "resolution_basis": {"type": "string"},
+          "confidence": {"enum": ["high", "medium", "low"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "surface_subject", "canonical_subject", "subject_kind", "predicate", "object", "record_family", "claim_kind", "modality", "epistemic_status", "time_surface", "metric", "value", "unit", "scope", "condition", "evidence_lines", "evidence_quotes", "mention_binding_ids", "unresolved_fields"],
+        "properties": {
+          "claim_id": {"type": "string", "minLength": 1},
+          "surface_subject": {"type": ["string", "null"]},
+          "canonical_subject": {"type": ["string", "null"]},
+          "subject_kind": {"enum": ["entity", "event", "role", "group", "product", "technology", "metric", "proposition", "unknown"]},
+          "predicate": {"type": "string", "minLength": 1},
+          "object": {"type": ["string", "null"]},
+          "record_family": {"enum": ["observation", "metric", "event", "comparison", "causal_claim", "forecast", "plan", "evaluation", "constraint", "other"]},
+          "claim_kind": {"enum": ["fact", "reported_fact", "forecast", "plan", "possibility", "evaluation", "causal_claim", "requirement", "unknown"]},
+          "modality": {"enum": ["asserted", "possible", "likely", "unlikely", "required", "conditional", "unknown"]},
+          "epistemic_status": {"enum": ["confirmed_by_source", "reported", "speaker_assessment", "hypothesis", "uncertain"]},
+          "time_surface": {"type": ["string", "null"]},
+          "metric": {"type": ["string", "null"]},
+          "value": {"type": ["number", "string", "null"]},
+          "unit": {"type": ["string", "null"]},
+          "scope": {"type": ["string", "null"]},
+          "condition": {"type": ["string", "null"]},
+          "evidence_lines": {"$ref": "#/$defs/lineNumbers"},
+          "evidence_quotes": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "mention_binding_ids": {"type": "array", "items": {"type": "string"}},
+          "unresolved_fields": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["relation_id", "relation_type", "source_claim_ids", "target_claim_ids", "condition", "evidence_lines", "unresolved_fields"],
+        "properties": {
+          "relation_id": {"type": "string", "minLength": 1},
+          "relation_type": {"enum": ["causes", "enables", "constrains", "qualifies", "depends_on", "compares", "contrasts", "supports", "precedes", "elaborates", "exemplifies"]},
+          "source_claim_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "target_claim_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "condition": {"type": ["string", "null"]},
+          "evidence_lines": {"$ref": "#/$defs/lineNumbers"},
+          "unresolved_fields": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "segment_dispositions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_lines", "status", "claim_ids", "relation_ids", "reason"],
+        "properties": {
+          "source_lines": {"$ref": "#/$defs/lineNumbers"},
+          "status": {"enum": ["consumed", "ignored_with_reason", "unresolved_for_replay"]},
+          "claim_ids": {"type": "array", "items": {"type": "string"}},
+          "relation_ids": {"type": "array", "items": {"type": "string"}},
+          "reason": {"type": ["string", "null"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "lineage": {"type": "object"}
+  },
+  "$defs": {
+    "lineNumbers": {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 1}}
+  },
+  "additionalProperties": true
+}

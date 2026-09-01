@@ -13,6 +13,7 @@ from research_semantic_ledger.validation import validate_document, validate_path
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "examples" / "synthetic-group-reference.json"
+GENERIC_FIXTURE = ROOT / "examples" / "synthetic-extracted-ledger.json"
 
 
 class ValidationTests(unittest.TestCase):
@@ -79,6 +80,30 @@ class ValidationTests(unittest.TestCase):
         self.assertIn("> **L1:** Alpha Optics", markdown)
         self.assertIn("## Narrative relations", markdown)
         self.assertIn("## Source lines", markdown)
+
+    def test_generic_markdown_renderer_preserves_bindings_and_narrative(self) -> None:
+        data = json.loads(GENERIC_FIXTURE.read_text(encoding="utf-8"))
+        markdown = render_document(data)
+        self.assertIn("## Reference bindings", markdown)
+        self.assertIn("`B-001`", markdown)
+        self.assertIn("## Atomic claims", markdown)
+        self.assertIn("`R-002` - causes", markdown)
+
+    def test_generic_relation_vocabulary_drift_fails_closed(self) -> None:
+        data = json.loads(GENERIC_FIXTURE.read_text(encoding="utf-8"))
+        broken = copy.deepcopy(data)
+        broken["relations"][0]["relation_type"] = "causal_explanation"
+        result = validate_document(broken)
+        self.assertFalse(result.valid)
+        self.assertIn("relation_type_unsupported:R-001", result.errors)
+
+    def test_generic_relation_must_cover_endpoint_evidence(self) -> None:
+        data = json.loads(GENERIC_FIXTURE.read_text(encoding="utf-8"))
+        broken = copy.deepcopy(data)
+        broken["relations"][0]["evidence_lines"] = [3]
+        result = validate_document(broken)
+        self.assertFalse(result.valid)
+        self.assertIn("relation_evidence_does_not_cover_endpoints:R-001", result.errors)
 
     def test_render_command_writes_markdown_to_stdout(self) -> None:
         completed = subprocess.run(

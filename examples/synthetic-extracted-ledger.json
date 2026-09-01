@@ -1,0 +1,202 @@
+{
+  "schema_version": "research_semantic_ledger_v0.2",
+  "synthetic": true,
+  "document": {
+    "document_id": "SYNTHETIC-EXTRACTION-001",
+    "source_sha256": "67e5cf6d30d63eaa531d595ba5d8a41c5a4337699870f2dd6e4133da9c9faf84",
+    "lines": [
+      "Alpha Optics plans to expand annual capacity to 40 units by 2027.",
+      "Beta Photonics plans to expand annual capacity to 70 units by 2027.",
+      "The two companies therefore expect their planned-capacity gap to narrow.",
+      "Other small vendors using the same equipment still face design, sampling, and yield challenges and are unlikely to break through in the short term."
+    ]
+  },
+  "document_frame": {
+    "document_frame": {
+      "document_id": "SYNTHETIC-EXTRACTION-001",
+      "focal_topics": ["capacity plans", "supplier execution risk"],
+      "speaker_roles": [],
+      "time_anchor_candidates": [{"surface": "2027", "anchor_type": "other", "support_lines": [1, 2]}]
+    },
+    "entity_candidates": [
+      {"candidate_id": "ORG-ALPHA", "canonical_name": "Alpha Optics", "entity_type": "organization", "aliases": ["Alpha Optics"], "document_roles": ["vendor"], "support_lines": [1], "resolution_scope": "document", "confidence": "high"},
+      {"candidate_id": "ORG-BETA", "canonical_name": "Beta Photonics", "entity_type": "organization", "aliases": ["Beta Photonics"], "document_roles": ["vendor"], "support_lines": [2], "resolution_scope": "document", "confidence": "high"}
+    ],
+    "event_candidates": [],
+    "discourse_segments": [{"segment_id": "SEG-001", "start_line": 1, "end_line": 4, "topic": "capacity and execution", "active_entity_candidate_ids": ["ORG-ALPHA", "ORG-BETA"], "active_role_ids": []}],
+    "unresolved_document_questions": []
+  },
+  "mention_bindings": [
+    {
+      "binding_id": "B-001",
+      "surface": "The two companies",
+      "evidence_lines": [3],
+      "resolution_status": "group_resolved",
+      "canonical_entity_ids": ["ORG-ALPHA", "ORG-BETA"],
+      "canonical_names": ["Alpha Optics", "Beta Photonics"],
+      "discourse_role_id": null,
+      "resolution_scope": "paragraph",
+      "resolution_basis": "The only two explicitly named companies in the preceding lines.",
+      "confidence": "high"
+    },
+    {
+      "binding_id": "B-002",
+      "surface": "Other small vendors using the same equipment",
+      "evidence_lines": [4],
+      "resolution_status": "class_not_unique",
+      "canonical_entity_ids": [],
+      "canonical_names": [],
+      "discourse_role_id": "ROLE-OTHER-SMALL-VENDORS",
+      "resolution_scope": "sentence",
+      "resolution_basis": "The source defines an open vendor class and supplies no exhaustive member list.",
+      "confidence": "high"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C-001",
+      "surface_subject": "Alpha Optics",
+      "canonical_subject": "Alpha Optics",
+      "subject_kind": "entity",
+      "predicate": "plans to expand annual capacity",
+      "object": "40 units by 2027",
+      "record_family": "plan",
+      "claim_kind": "plan",
+      "modality": "asserted",
+      "epistemic_status": "reported",
+      "time_surface": "by 2027",
+      "metric": "annual capacity",
+      "value": 40,
+      "unit": "units",
+      "scope": null,
+      "condition": null,
+      "evidence_lines": [1],
+      "evidence_quotes": ["Alpha Optics plans to expand annual capacity to 40 units by 2027."],
+      "mention_binding_ids": [],
+      "unresolved_fields": []
+    },
+    {
+      "claim_id": "C-002",
+      "surface_subject": "Beta Photonics",
+      "canonical_subject": "Beta Photonics",
+      "subject_kind": "entity",
+      "predicate": "plans to expand annual capacity",
+      "object": "70 units by 2027",
+      "record_family": "plan",
+      "claim_kind": "plan",
+      "modality": "asserted",
+      "epistemic_status": "reported",
+      "time_surface": "by 2027",
+      "metric": "annual capacity",
+      "value": 70,
+      "unit": "units",
+      "scope": null,
+      "condition": null,
+      "evidence_lines": [2],
+      "evidence_quotes": ["Beta Photonics plans to expand annual capacity to 70 units by 2027."],
+      "mention_binding_ids": [],
+      "unresolved_fields": []
+    },
+    {
+      "claim_id": "C-003",
+      "surface_subject": "The two companies",
+      "canonical_subject": "Alpha Optics and Beta Photonics",
+      "subject_kind": "group",
+      "predicate": "expect their planned-capacity gap to narrow",
+      "object": null,
+      "record_family": "comparison",
+      "claim_kind": "forecast",
+      "modality": "asserted",
+      "epistemic_status": "speaker_assessment",
+      "time_surface": null,
+      "metric": "planned-capacity gap",
+      "value": null,
+      "unit": null,
+      "scope": null,
+      "condition": null,
+      "evidence_lines": [3],
+      "evidence_quotes": ["The two companies therefore expect their planned-capacity gap to narrow."],
+      "mention_binding_ids": ["B-001"],
+      "unresolved_fields": []
+    },
+    {
+      "claim_id": "C-004",
+      "surface_subject": "Other small vendors using the same equipment",
+      "canonical_subject": "Other small vendors using the same equipment",
+      "subject_kind": "role",
+      "predicate": "face challenges",
+      "object": "design, sampling, and yield",
+      "record_family": "constraint",
+      "claim_kind": "reported_fact",
+      "modality": "asserted",
+      "epistemic_status": "reported",
+      "time_surface": null,
+      "metric": null,
+      "value": null,
+      "unit": null,
+      "scope": null,
+      "condition": null,
+      "evidence_lines": [4],
+      "evidence_quotes": ["face design, sampling, and yield challenges"],
+      "mention_binding_ids": ["B-002"],
+      "unresolved_fields": []
+    },
+    {
+      "claim_id": "C-005",
+      "surface_subject": "Other small vendors using the same equipment",
+      "canonical_subject": "Other small vendors using the same equipment",
+      "subject_kind": "role",
+      "predicate": "are unlikely to break through",
+      "object": null,
+      "record_family": "forecast",
+      "claim_kind": "forecast",
+      "modality": "unlikely",
+      "epistemic_status": "speaker_assessment",
+      "time_surface": "in the short term",
+      "metric": null,
+      "value": null,
+      "unit": null,
+      "scope": null,
+      "condition": null,
+      "evidence_lines": [4],
+      "evidence_quotes": ["are unlikely to break through in the short term"],
+      "mention_binding_ids": ["B-002"],
+      "unresolved_fields": []
+    }
+  ],
+  "relations": [
+    {
+      "relation_id": "R-001",
+      "relation_type": "supports",
+      "source_claim_ids": ["C-001", "C-002"],
+      "target_claim_ids": ["C-003"],
+      "condition": null,
+      "evidence_lines": [1, 2, 3],
+      "unresolved_fields": []
+    },
+    {
+      "relation_id": "R-002",
+      "relation_type": "causes",
+      "source_claim_ids": ["C-004"],
+      "target_claim_ids": ["C-005"],
+      "condition": null,
+      "evidence_lines": [4],
+      "unresolved_fields": []
+    }
+  ],
+  "segment_dispositions": [
+    {"source_lines": [1], "status": "consumed", "claim_ids": ["C-001"], "relation_ids": ["R-001"], "reason": null},
+    {"source_lines": [2], "status": "consumed", "claim_ids": ["C-002"], "relation_ids": ["R-001"], "reason": null},
+    {"source_lines": [3], "status": "consumed", "claim_ids": ["C-003"], "relation_ids": ["R-001"], "reason": null},
+    {"source_lines": [4], "status": "consumed", "claim_ids": ["C-004", "C-005"], "relation_ids": ["R-002"], "reason": null}
+  ],
+  "lineage": {
+    "run_id": "SYNTHETIC-CONFORMANCE",
+    "provider": "human_fixture",
+    "requested_model": null,
+    "document_frame_prompt_sha256": null,
+    "chunk_prompt_sha256": null,
+    "budget": {"calls": 0, "estimated_cost_cny": 0},
+    "formal_database_writes": 0
+  }
+}

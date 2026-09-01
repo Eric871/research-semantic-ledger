@@ -14,7 +14,10 @@ jobs:
           python-version: "3.12"
       - run: python -m research_semantic_ledger doctor
       - run: python -m research_semantic_ledger validate examples/synthetic-group-reference.json
-      - run: python -m research_semantic_ledger summary examples/synthetic-group-reference.json
-      - run: python -m research_semantic_ledger render examples/synthetic-group-reference.json --output outputs/example.md
+      - run: python -m research_semantic_ledger validate examples/synthetic-extracted-ledger.json
+      - run: python -m research_semantic_ledger evaluate examples/synthetic-extracted-ledger.json --gold examples/synthetic-extraction-gold.json
+      - run: python -m research_semantic_ledger summary examples/synthetic-extracted-ledger.json
+      - run: python -m research_semantic_ledger render examples/synthetic-extracted-ledger.json --output outputs/example.md
+      - run: python -m research_semantic_ledger extract examples/synthetic-research-note.md --dry-run
       - run: python scripts/validate_synthetic_fixture.py
       - run: python -m unittest discover -s tests -v

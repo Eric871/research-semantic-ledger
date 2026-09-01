@@ -1,0 +1,55 @@
+{
+  "schema_version": "research_semantic_ledger_gold_v0.1",
+  "document_id": "SYNTHETIC-EXTRACTION-001",
+  "description": "Public-safe Gold for reference binding, atomic extraction, and narrative direction.",
+  "cases": [
+    {
+      "case_id": "GOLD-BINDING-GROUP-001",
+      "dimension": "reference_resolution",
+      "target": "mention_bindings",
+      "exact": {"surface": "The two companies", "resolution_status": "group_resolved"},
+      "list_contains": {"canonical_entity_ids": ["ORG-ALPHA", "ORG-BETA"]},
+      "minimum_matches": 1,
+      "maximum_matches": 1
+    },
+    {
+      "case_id": "GOLD-BINDING-OPEN-001",
+      "dimension": "reference_resolution",
+      "target": "mention_bindings",
+      "exact": {"surface": "Other small vendors using the same equipment", "resolution_status": "class_not_unique"},
+      "minimum_matches": 1,
+      "maximum_matches": 1
+    },
+    {
+      "case_id": "GOLD-CLAIM-CAPACITY-001",
+      "dimension": "atomic_claim",
+      "target": "claims",
+      "exact": {"canonical_subject": "Alpha Optics", "value": 40, "unit": "units", "claim_kind": "plan"},
+      "contains": {"predicate": "expand annual capacity"},
+      "minimum_matches": 1
+    },
+    {
+      "case_id": "GOLD-CLAIM-STAGES-001",
+      "dimension": "atomic_claim",
+      "target": "claims",
+      "contains": {"canonical_subject": "Other small vendors", "object": "design, sampling, and yield"},
+      "minimum_matches": 1
+    },
+    {
+      "case_id": "GOLD-NARRATIVE-COMPARISON-001",
+      "dimension": "narrative",
+      "target": "relations",
+      "exact": {"relation_type": "supports"},
+      "list_contains": {"source_claim_ids": ["C-001", "C-002"], "target_claim_ids": ["C-003"]},
+      "minimum_matches": 1
+    },
+    {
+      "case_id": "GOLD-NARRATIVE-CAUSAL-001",
+      "dimension": "narrative",
+      "target": "relations",
+      "exact": {"relation_type": "causes"},
+      "list_contains": {"source_claim_ids": ["C-004"], "target_claim_ids": ["C-005"]},
+      "minimum_matches": 1
+    }
+  ]
+}

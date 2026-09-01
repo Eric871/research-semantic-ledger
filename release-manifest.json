@@ -5,12 +5,12 @@
     "repository_slug": "research-semantic-ledger",
     "tagline": "Auditable extraction of atomic claims and narrative relations from long-form research documents."
   },
-  "status": "agent_ready_public_mvp",
+  "status": "agent_ready_online_extraction_mvp",
   "as_of": "2026-09-01",
   "remote_url": "https://github.com/Eric871/research-semantic-ledger",
   "remote_visibility": "public",
   "remote_state": "published",
-  "public_export_file_count": 22,
+  "public_export_file_count": 34,
   "publication": {
     "initial_commit": "011756617999244bf52236f368345b53a845c1ae",
     "branch": "main",
@@ -21,17 +21,15 @@
     "status": "selected",
     "spdx_id": "Apache-2.0"
   },
-  "public_safe_fixture": "examples/synthetic-group-reference.json",
+  "public_safe_fixture": "examples/synthetic-extracted-ledger.json",
   "public_export_allowlist": [
     "."
   ],
   "internal_components_pending_public_audit": [
-    "provider adapters and online runners",
-    "prompt and semantic contracts",
-    "full-document evaluation scripts",
-    "human Gold and audit batches",
+    "licensed-document human Gold and audit batches",
     "audit dashboard",
-    "licensed source and provider artifacts"
+    "licensed source and provider artifacts",
+    "formal database promotion"
   ],
   "mandatory_excludes": [
     "**/.git/**",
@@ -81,6 +79,14 @@
     "dependency_free_cli_added",
     "agent_doctor_added",
     "fail_closed_unit_tests_added",
-    "validated_json_to_markdown_renderer_added"
+    "validated_json_to_markdown_renderer_added",
+    "portable_deepseek_provider_adapter_added",
+    "full_document_preflight_and_runner_added",
+    "complete_public_prompt_contracts_added",
+    "generic_candidate_ledger_contract_added",
+    "public_safe_gold_and_evaluator_added",
+    "closed_narrative_relation_vocabulary_added",
+    "online_source_authorization_gate_added",
+    "call_and_configurable_cost_ceiling_added"
   ]
 }
