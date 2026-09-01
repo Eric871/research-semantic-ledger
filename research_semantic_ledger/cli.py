@@ -79,13 +79,13 @@ def _render(path: Path, output: Path | None, force: bool) -> int:
         _emit({"status": "fail", "errors": [f"output_exists:{output}"]}, stream=sys.stderr)
         return 2
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(markdown, encoding="utf-8")
+    output.write_text(markdown, encoding="utf-8", newline="\n")
     _emit(
         {
             "status": "pass",
             "input": path.as_posix(),
             "output": output.as_posix(),
-            "bytes": len(markdown.encode("utf-8")),
+            "bytes": output.stat().st_size,
         }
     )
     return 0
