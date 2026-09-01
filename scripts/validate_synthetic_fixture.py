@@ -26,7 +26,7 @@ def main() -> int:
         if row["resolution_status"] == "resolved_group":
             assert len(row["member_ids"]) >= 2
             assert len(row["member_ids"]) == len(row["member_names"])
-        elif row["resolution_status"] == "unresolved_group_members":
+        elif row["resolution_status"] == "scoped_open_group":
             assert not row["member_ids"] and not row["member_names"]
             assert row["excluded_ids"]
         else:

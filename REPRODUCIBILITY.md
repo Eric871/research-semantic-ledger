@@ -10,7 +10,7 @@ Requirements: Python 3.11 or newer; no third-party Python packages.
 python scripts/validate_synthetic_fixture.py
 ```
 
-This validates evidence spans, plural membership, complement exclusions, claim references, and relation endpoints in the public-safe fixture. It demonstrates contracts and gates, not model quality.
+This validates evidence spans, entity-set membership, scope exclusions, claim references, and relation endpoints in the public-safe fixture. It demonstrates contracts and gates, not model quality.
 
 ## Level 2: internal offline replay
 
@@ -46,4 +46,4 @@ The dependency-free synthetic conformance check passes both in the working tree 
 
 The provider runners, licensed source, provider payloads, human Gold, audit database, and dashboard are intentionally deferred. Their existing internal implementations still have machine-specific paths and private-artifact dependencies; each component requires a separate portability and publication review before it can be added.
 
-The owner selected Apache-2.0 and authorized the first minimal push. The resulting release decision is tracked in `release-manifest.json`.
+The owner selected Apache-2.0 and authorized the first minimal push. Initial commit `0117566` was published to `main`, and GitHub Actions conformance run `33460073495` completed successfully. The release evidence is tracked in `release-manifest.json`.

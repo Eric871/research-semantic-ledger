@@ -9,7 +9,6 @@ Research Semantic Ledger is an experimental, evidence-first pipeline for turning
 Conventional retrieval pipelines can find relevant paragraphs while still losing critical meaning:
 
 - pronouns and generic company references may bind to the wrong entity;
-- plural or complement groups may collapse into one company;
 - facts, forecasts, assumptions, and conclusions may be flattened together;
 - numeric facts may survive while the comparison or causal argument disappears;
 - structurally valid JSON may still be semantically wrong.
@@ -78,7 +77,7 @@ Validated within the named single-document experiment:
 - immutable source anchoring;
 - occurrence-level context resolution;
 - atomic-claim and local-relation candidate production;
-- deterministic structural, evidence, plural-consistency, cost, and replay gates;
+- deterministic structural, evidence, entity-set consistency, cost, and replay gates;
 - versioned human-audit batches.
 
 Not yet established:
@@ -91,4 +90,4 @@ Not yet established:
 
 ## Repository status
 
-This directory is the validated minimal public-export tree for [`Eric871/research-semantic-ledger`](https://github.com/Eric871/research-semantic-ledger). The remote was confirmed public and empty before the first push on 2026-09-01. This first tree contains only documentation, a synthetic conformance fixture, a dependency-free validator, and CI; internal source text, provider payloads, Gold, audit data, and experimental runners remain outside it.
+This is the validated minimal public export for [`Eric871/research-semantic-ledger`](https://github.com/Eric871/research-semantic-ledger). Initial commit [`0117566`](https://github.com/Eric871/research-semantic-ledger/commit/011756617999244bf52236f368345b53a845c1ae) was published on 2026-09-01 and its [conformance workflow](https://github.com/Eric871/research-semantic-ledger/actions/runs/33460073495) passed. The export contains only documentation, a synthetic conformance fixture, a dependency-free validator, and CI; internal source text, provider payloads, Gold, audit data, and experimental runners remain outside it.

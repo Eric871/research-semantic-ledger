@@ -24,7 +24,7 @@
       "binding_id": "G-002",
       "surface": "Other small vendors using the same equipment",
       "source_line": 4,
-      "resolution_status": "unresolved_group_members",
+      "resolution_status": "scoped_open_group",
       "member_ids": [],
       "member_names": [],
       "excluded_ids": ["ORG-ALPHA", "ORG-BETA"]
