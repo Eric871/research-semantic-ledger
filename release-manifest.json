@@ -10,7 +10,6 @@
   "remote_url": "https://github.com/Eric871/research-semantic-ledger",
   "remote_visibility": "public",
   "remote_state": "published",
-  "public_export_file_count": 34,
   "publication": {
     "initial_commit": "011756617999244bf52236f368345b53a845c1ae",
     "branch": "main",
@@ -18,9 +17,9 @@
     "conformance_conclusion": "success"
   },
   "latest_validated_implementation": {
-    "version": "0.3.0",
-    "commit": "9d6f300522fe4553bb5dae1700e4c9475fde55a0",
-    "conformance_run": "https://github.com/Eric871/research-semantic-ledger/actions/runs/33464976007",
+    "version": "0.3.1",
+    "commit": "a011ed032818e3926e0212cb68f403c9e4016b2c",
+    "conformance_run": "https://github.com/Eric871/research-semantic-ledger/actions/runs/33478267417",
     "conformance_conclusion": "success"
   },
   "fixed_incidents": [
@@ -103,6 +102,11 @@
     "public_safe_gold_and_evaluator_added",
     "closed_narrative_relation_vocabulary_added",
     "online_source_authorization_gate_added",
-    "call_and_configurable_cost_ceiling_added"
+    "call_and_configurable_cost_ceiling_added",
+    "deepseek_v4_thinking_explicitly_disabled",
+    "failure_envelope_and_usage_preserved",
+    "validated_document_frame_reuse_added",
+    "exact_successful_call_replay_added",
+    "recorded_conservative_repairs_added"
   ]
 }

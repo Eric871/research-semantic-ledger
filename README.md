@@ -152,11 +152,11 @@ Human Gold tied to licensed documents remains private. The public Gold demonstra
 3. **Online DeepSeek extraction** — explicitly authorized, source-bearing, nondeterministic provider inference with preserved receipts.
 4. **Private semantic audit** — licensed source, human Gold, audit batches, and reviewer decisions outside the public repository.
 
-See [REPRODUCIBILITY.md](REPRODUCIBILITY.md) and [SECURITY_AND_DATA.md](SECURITY_AND_DATA.md).
+See [REPRODUCIBILITY.md](REPRODUCIBILITY.md), [SECURITY_AND_DATA.md](SECURITY_AND_DATA.md), and [CHANGELOG.md](CHANGELOG.md).
 
 ## Current evidence and maturity
 
-The principal internal experiment processed one frozen 239-line expert transcript with 54 question-and-answer units. It produced 474 atomic candidates and 139 narrative-relation candidates. Structural and evidence gates passed 8/8, the domain-specific regression passed 7/7, and the provider semantic Gold result was 5/9. An unblinded 9/9 adjudication overlay is mechanism-design evidence only and is not an independent provider score.
+The latest internal v0.3.1 experiment processed one frozen 239-line expert transcript with 54 question-and-answer units. It produced 483 atomic candidates and 188 narrative-relation candidates, passed the deterministic structural and evidence validator, and scored 6/9 on a private semantic regression. This is evidence from one licensed document, not a general accuracy estimate.
 
 Therefore:
 

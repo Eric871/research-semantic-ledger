@@ -14,6 +14,10 @@ The public Agent quick start and `extract --dry-run` require no credentials. Onl
 
 Online extraction requires an explicit `--authorize-external-send` flag. The tool cannot determine whether the operator owns distribution rights; the operator must name and authorize the source, endpoint, model, and any cost ceiling before sending restricted material.
 
+## Resume artifacts
+
+A reused `document-frame.json` and every directory supplied through `--replay-successful-calls` remain source-bearing private artifacts. Store them with the original authorized run, never copy them into examples or commits, and do not treat exact replay as a new distribution permission. If a request is not an exact replay hit, the resulting provider call still requires external-send authorization and remains subject to the configured ceilings.
+
 ## Data tiers
 
 | Tier | GitHub treatment |
