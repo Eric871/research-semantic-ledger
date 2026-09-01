@@ -42,6 +42,7 @@ class Budget:
     input_price_cny_per_million: float | None = None
     output_price_cny_per_million: float | None = None
     calls: int = 0
+    replayed_calls: int = 0
     prompt_tokens: int = 0
     completion_tokens: int = 0
     estimated_cost_cny: float = 0.0
@@ -67,6 +68,8 @@ class Budget:
 
     def record(self, response: ProviderResponse) -> None:
         self.calls += 1
+        if response.replayed:
+            self.replayed_calls += 1
         prompt_tokens = int(response.usage.get("prompt_tokens") or 0)
         completion_tokens = int(response.usage.get("completion_tokens") or 0)
         self.prompt_tokens += prompt_tokens
@@ -82,6 +85,8 @@ class Budget:
     def receipt(self) -> dict[str, Any]:
         return {
             "calls": self.calls,
+            "external_calls": self.calls - self.replayed_calls,
+            "replayed_calls": self.replayed_calls,
             "max_calls": self.max_calls,
             "prompt_tokens": self.prompt_tokens,
             "completion_tokens": self.completion_tokens,
@@ -101,6 +106,8 @@ class ExtractionConfig:
     max_cost_cny: float | None = None
     input_price_cny_per_million: float | None = None
     output_price_cny_per_million: float | None = None
+    reuse_document_frame_path: Path | None = None
+    replay_receipt_dirs: tuple[Path, ...] = ()
 
 
 @dataclass
@@ -111,6 +118,7 @@ class ExtractionState:
     model_name: str
     budget: Budget
     raw_receipts: list[dict[str, Any]] = field(default_factory=list)
+    local_repairs: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _prompt(name: str) -> str:
@@ -240,6 +248,7 @@ def _invoke(
             max_output_tokens=max_output_tokens,
         )
     except ProviderError as exc:
+        raw_response = getattr(exc, "raw_response", None)
         receipt = {
             "call_number": call_number,
             "call_role": call_role,
@@ -247,7 +256,42 @@ def _invoke(
             "error": str(exc),
             "request": {"system_prompt": system_prompt, "user_payload": user_payload},
         }
+        budget_error: str | None = None
+        if isinstance(raw_response, dict):
+            usage_raw = raw_response.get("usage")
+            usage = {
+                "prompt_tokens": int((usage_raw or {}).get("prompt_tokens") or 0),
+                "completion_tokens": int((usage_raw or {}).get("completion_tokens") or 0),
+                "total_tokens": int((usage_raw or {}).get("total_tokens") or 0),
+            }
+            choices = raw_response.get("choices")
+            choice = choices[0] if isinstance(choices, list) and choices and isinstance(choices[0], dict) else {}
+            observed_model = raw_response.get("model")
+            response_for_budget = ProviderResponse(
+                payload={},
+                raw_response=raw_response,
+                usage=usage,
+                observed_model=observed_model if isinstance(observed_model, str) else None,
+                finish_reason=choice.get("finish_reason") if isinstance(choice.get("finish_reason"), str) else None,
+            )
+            try:
+                state.budget.record(response_for_budget)
+            except ExtractionError as budget_exc:
+                budget_error = str(budget_exc)
+            receipt.update(
+                {
+                    "response": raw_response,
+                    "usage": usage,
+                    "observed_model": response_for_budget.observed_model,
+                    "finish_reason": response_for_budget.finish_reason,
+                }
+            )
+        if budget_error is not None:
+            receipt["budget_error"] = budget_error
+        state.raw_receipts.append(receipt)
         _write_json(state.output_dir / "raw" / f"call-{call_number:04d}.json", receipt)
+        if budget_error is not None:
+            raise ExtractionError(budget_error) from exc
         raise ExtractionError(str(exc)) from exc
     state.budget.record(response)
     receipt = {
@@ -259,6 +303,8 @@ def _invoke(
         "usage": response.usage,
         "observed_model": response.observed_model,
         "finish_reason": response.finish_reason,
+        "replayed": response.replayed,
+        "replay_original_usage": response.replay_original_usage,
     }
     state.raw_receipts.append(receipt)
     _write_json(state.output_dir / "raw" / f"call-{call_number:04d}.json", receipt)
@@ -391,6 +437,363 @@ def _split_chunk(chunk: SourceChunk, split_after_line: int, suffix: str) -> tupl
     )
 
 
+def _drop_blank_line_dispositions(
+    payload: dict[str, Any], chunk: SourceChunk, document: SourceDocument
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Remove semantically empty dispositions emitted only for blank lines.
+
+    The Prompt requires dispositions for nonblank lines only. A provider may
+    nevertheless mark a blank separator as ignored. Removing that row does not
+    change any extracted claim, relation, or evidence and is therefore a safe,
+    deterministic repair. Any row carrying semantic references still fails
+    closed in the normal validator.
+    """
+
+    dispositions = payload.get("segment_dispositions")
+    if not isinstance(dispositions, list):
+        return payload, []
+    chunk_lines = {int(row["line"]) for row in chunk.numbered_lines}
+    kept: list[Any] = []
+    removed_lines: list[int] = []
+    for row in dispositions:
+        source_lines = row.get("source_lines") if isinstance(row, dict) else None
+        safe_blank_only = (
+            isinstance(source_lines, list)
+            and bool(source_lines)
+            and all(
+                isinstance(number, int)
+                and number in chunk_lines
+                and not document.lines[number - 1].strip()
+                for number in source_lines
+            )
+            and row.get("status") == "ignored_with_reason"
+            and not (row.get("claim_ids") or [])
+            and not (row.get("relation_ids") or [])
+        )
+        if safe_blank_only:
+            removed_lines.extend(source_lines)
+        else:
+            kept.append(row)
+    if not removed_lines:
+        return payload, []
+    repaired = dict(payload)
+    repaired["segment_dispositions"] = kept
+    return repaired, [
+        {
+            "repair_type": "drop_blank_line_dispositions",
+            "chunk_id": chunk.chunk_id,
+            "source_lines": sorted(removed_lines),
+            "semantic_fields_changed": False,
+        }
+    ]
+
+
+def _repair_binding_entity_name_mismatches(
+    payload: dict[str, Any], frame_payload: dict[str, Any], chunk: SourceChunk
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Repair only structurally provable binding/name mismatches.
+
+    Existing frame IDs may deterministically supply their canonical names. A
+    provider-assigned name without any frame ID is not a resolved entity, so it
+    is conservatively downgraded instead of manufacturing a new identity.
+    """
+
+    bindings = payload.get("mention_bindings")
+    if not isinstance(bindings, list):
+        return payload, []
+    frame_names = {
+        row["candidate_id"]: row["canonical_name"]
+        for row in frame_payload.get("entity_candidates") or []
+        if isinstance(row, dict)
+        and isinstance(row.get("candidate_id"), str)
+        and isinstance(row.get("canonical_name"), str)
+    }
+    repaired_bindings: list[Any] = []
+    repair_rows: list[dict[str, Any]] = []
+    changed = False
+    for source in bindings:
+        if not isinstance(source, dict):
+            repaired_bindings.append(source)
+            continue
+        entity_ids = source.get("canonical_entity_ids")
+        entity_names = source.get("canonical_names")
+        status = source.get("resolution_status")
+        row = dict(source)
+        binding_id = row.get("binding_id")
+        ids_are_known = (
+            isinstance(entity_ids, list)
+            and bool(entity_ids)
+            and all(isinstance(value, str) and value in frame_names for value in entity_ids)
+        )
+        valid_resolved = status == "resolved" and ids_are_known and len(entity_ids) == 1
+        valid_group = status == "group_resolved" and ids_are_known and len(entity_ids) >= 2
+        valid_unresolved = (
+            status in {"ambiguous", "unresolved", "class_not_unique"}
+            and isinstance(entity_ids, list)
+            and not entity_ids
+        )
+        if valid_resolved or valid_group:
+            expected_names = [frame_names[value] for value in entity_ids]
+            if isinstance(entity_names, list) and entity_names == expected_names:
+                repaired_bindings.append(source)
+                continue
+            row["canonical_names"] = expected_names
+            action = "fill_names_from_document_frame_ids"
+            semantic_change = False
+        elif valid_unresolved:
+            if isinstance(entity_names, list) and not entity_names:
+                repaired_bindings.append(source)
+                continue
+            row["canonical_names"] = []
+            action = "clear_names_from_unresolved_binding"
+            semantic_change = False
+        else:
+            row["resolution_status"] = "unresolved"
+            row["canonical_entity_ids"] = []
+            row["canonical_names"] = []
+            row["confidence"] = "low"
+            basis = row.get("resolution_basis")
+            suffix = "Downgraded locally because the document-frame entity IDs do not support the declared resolution status."
+            row["resolution_basis"] = f"{basis} {suffix}".strip() if isinstance(basis, str) else suffix
+            action = "downgrade_unsupported_resolved_binding"
+            semantic_change = True
+        repaired_bindings.append(row)
+        repair_rows.append(
+            {
+                "repair_type": action,
+                "chunk_id": chunk.chunk_id,
+                "binding_id": binding_id,
+                "semantic_fields_changed": semantic_change,
+            }
+        )
+        changed = True
+    if not changed:
+        return payload, []
+    repaired = dict(payload)
+    repaired["mention_bindings"] = repaired_bindings
+    return repaired, repair_rows
+
+
+def _deterministic_overflow_split_line(payload: dict[str, Any], chunk: SourceChunk) -> int | None:
+    """Choose a stable line-boundary split when a provider ignores the 24-claim cap."""
+
+    claims = payload.get("claims")
+    if payload.get("split_required") is not False or not isinstance(claims, list) or len(claims) <= 24:
+        return None
+    line_numbers = [int(row["line"]) for row in chunk.numbered_lines]
+    if len(line_numbers) < 2:
+        return None
+    return line_numbers[(len(line_numbers) - 1) // 2]
+
+
+def _repair_relation_evidence_coverage(
+    payload: dict[str, Any], chunk: SourceChunk
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Union endpoint claim evidence into relation evidence when provable locally."""
+
+    claims = payload.get("claims")
+    relations = payload.get("relations")
+    if not isinstance(claims, list) or not isinstance(relations, list):
+        return payload, []
+    claim_lines = {
+        row["claim_id"]: row.get("evidence_lines")
+        for row in claims
+        if isinstance(row, dict)
+        and isinstance(row.get("claim_id"), str)
+        and isinstance(row.get("evidence_lines"), list)
+    }
+    repaired_relations: list[Any] = []
+    repairs: list[dict[str, Any]] = []
+    changed = False
+    for source in relations:
+        if not isinstance(source, dict) or not isinstance(source.get("evidence_lines"), list):
+            repaired_relations.append(source)
+            continue
+        endpoint_ids = (source.get("source_claim_ids") or []) + (source.get("target_claim_ids") or [])
+        if not endpoint_ids or any(value not in claim_lines for value in endpoint_ids):
+            repaired_relations.append(source)
+            continue
+        required_lines = {line for claim_id in endpoint_ids for line in claim_lines[claim_id]}
+        current_lines = set(source["evidence_lines"])
+        missing_lines = sorted(required_lines - current_lines)
+        if not missing_lines:
+            repaired_relations.append(source)
+            continue
+        row = dict(source)
+        row["evidence_lines"] = sorted(current_lines | required_lines)
+        repaired_relations.append(row)
+        repairs.append(
+            {
+                "repair_type": "extend_relation_evidence_to_endpoint_claims",
+                "chunk_id": chunk.chunk_id,
+                "relation_id": row.get("relation_id"),
+                "added_source_lines": missing_lines,
+                "semantic_fields_changed": False,
+            }
+        )
+        changed = True
+    if not changed:
+        return payload, []
+    repaired = dict(payload)
+    repaired["relations"] = repaired_relations
+    return repaired, repairs
+
+
+def _repair_inexact_claim_quotes(
+    payload: dict[str, Any], chunk: SourceChunk, document: SourceDocument
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Replace inexact model quotes with the exact cited source lines."""
+
+    claims = payload.get("claims")
+    if not isinstance(claims, list):
+        return payload, []
+    chunk_lines = {int(row["line"]) for row in chunk.numbered_lines}
+    repaired_claims: list[Any] = []
+    repairs: list[dict[str, Any]] = []
+    changed = False
+    for source in claims:
+        if not isinstance(source, dict):
+            repaired_claims.append(source)
+            continue
+        evidence_lines = source.get("evidence_lines")
+        quotes = source.get("evidence_quotes")
+        if not isinstance(evidence_lines, list) or not evidence_lines or not set(evidence_lines).issubset(chunk_lines):
+            repaired_claims.append(source)
+            continue
+        evidence_text = "\n".join(document.lines[number - 1] for number in evidence_lines)
+        quotes_are_exact = isinstance(quotes, list) and bool(quotes) and all(
+            isinstance(quote, str) and bool(quote) and quote in evidence_text for quote in quotes
+        )
+        if quotes_are_exact:
+            repaired_claims.append(source)
+            continue
+        exact_lines = list(dict.fromkeys(document.lines[number - 1] for number in evidence_lines if document.lines[number - 1]))
+        if not exact_lines:
+            repaired_claims.append(source)
+            continue
+        row = dict(source)
+        row["evidence_quotes"] = exact_lines
+        repaired_claims.append(row)
+        repairs.append(
+            {
+                "repair_type": "replace_inexact_quote_with_full_evidence_line",
+                "chunk_id": chunk.chunk_id,
+                "claim_id": row.get("claim_id"),
+                "source_lines": evidence_lines,
+                "semantic_fields_changed": False,
+            }
+        )
+        changed = True
+    if not changed:
+        return payload, []
+    repaired = dict(payload)
+    repaired["claims"] = repaired_claims
+    return repaired, repairs
+
+
+def _longest_common_substring(left: str, right: str) -> str:
+    previous = [0] * (len(right) + 1)
+    best_length = 0
+    best_end = 0
+    for left_index, left_char in enumerate(left, start=1):
+        current = [0] * (len(right) + 1)
+        for right_index, right_char in enumerate(right, start=1):
+            if left_char == right_char:
+                current[right_index] = previous[right_index - 1] + 1
+                if current[right_index] > best_length:
+                    best_length = current[right_index]
+                    best_end = left_index
+        previous = current
+    return left[best_end - best_length : best_end]
+
+
+def _repair_inexact_binding_surfaces(
+    payload: dict[str, Any], chunk: SourceChunk, document: SourceDocument
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Use only a unique, sufficiently long exact substring to repair a surface."""
+
+    bindings = payload.get("mention_bindings")
+    if not isinstance(bindings, list):
+        return payload, []
+    chunk_lines = {int(row["line"]) for row in chunk.numbered_lines}
+    repaired_bindings: list[Any] = []
+    repairs: list[dict[str, Any]] = []
+    dropped_binding_ids: set[str] = set()
+    changed = False
+    for source in bindings:
+        if not isinstance(source, dict):
+            repaired_bindings.append(source)
+            continue
+        surface = source.get("surface")
+        evidence_lines = source.get("evidence_lines")
+        if (
+            not isinstance(surface, str)
+            or not isinstance(evidence_lines, list)
+            or not evidence_lines
+            or not set(evidence_lines).issubset(chunk_lines)
+        ):
+            repaired_bindings.append(source)
+            continue
+        evidence_texts = [document.lines[number - 1] for number in evidence_lines]
+        if any(surface in text for text in evidence_texts):
+            repaired_bindings.append(source)
+            continue
+        candidates = [_longest_common_substring(surface, text) for text in evidence_texts]
+        best_length = max((len(value) for value in candidates), default=0)
+        best_values = {value for value in candidates if len(value) == best_length and value}
+        minimum_length = max(4, (len(surface) + 1) // 2)
+        evidence_text = "\n".join(evidence_texts)
+        replacement = next(iter(best_values)) if len(best_values) == 1 else ""
+        if best_length < minimum_length or not replacement or evidence_text.count(replacement) != 1:
+            binding_id = source.get("binding_id")
+            if isinstance(binding_id, str):
+                dropped_binding_ids.add(binding_id)
+            repairs.append(
+                {
+                    "repair_type": "drop_unanchored_binding",
+                    "chunk_id": chunk.chunk_id,
+                    "binding_id": binding_id,
+                    "source_lines": evidence_lines,
+                    "original_surface": surface,
+                    "semantic_fields_changed": True,
+                }
+            )
+            changed = True
+            continue
+        row = dict(source)
+        row["surface"] = replacement
+        repaired_bindings.append(row)
+        repairs.append(
+            {
+                "repair_type": "replace_surface_with_unique_longest_exact_substring",
+                "chunk_id": chunk.chunk_id,
+                "binding_id": row.get("binding_id"),
+                "source_lines": evidence_lines,
+                "original_surface": surface,
+                "replacement_surface": replacement,
+                "semantic_fields_changed": False,
+            }
+        )
+        changed = True
+    if not changed:
+        return payload, []
+    repaired = dict(payload)
+    repaired["mention_bindings"] = repaired_bindings
+    if dropped_binding_ids and isinstance(payload.get("claims"), list):
+        repaired_claims: list[Any] = []
+        for source in payload["claims"]:
+            if not isinstance(source, dict) or not isinstance(source.get("mention_binding_ids"), list):
+                repaired_claims.append(source)
+                continue
+            row = dict(source)
+            row["mention_binding_ids"] = [
+                value for value in source["mention_binding_ids"] if value not in dropped_binding_ids
+            ]
+            repaired_claims.append(row)
+        repaired["claims"] = repaired_claims
+    return repaired, repairs
+
+
 def _namespace_chunk(payload: dict[str, Any], chunk_id: str) -> dict[str, list[dict[str, Any]]]:
     binding_map = {row["binding_id"]: f"{chunk_id}::{row['binding_id']}" for row in payload["mention_bindings"]}
     claim_map = {row["claim_id"]: f"{chunk_id}::{row['claim_id']}" for row in payload["claims"]}
@@ -467,6 +870,12 @@ def prepare_run(
             "max_cost_cny": config.max_cost_cny,
             "input_price_cny_per_million": config.input_price_cny_per_million,
             "output_price_cny_per_million": config.output_price_cny_per_million,
+            "reuse_document_frame_path": (
+                config.reuse_document_frame_path.resolve().as_posix()
+                if config.reuse_document_frame_path is not None
+                else None
+            ),
+            "replay_receipt_dirs": [path.resolve().as_posix() for path in config.replay_receipt_dirs],
         },
         "chunks": [
             {"chunk_id": row.chunk_id, "start_line": row.start_line, "end_line": row.end_line}
@@ -516,20 +925,37 @@ def run_extraction(
     state = ExtractionState(output_dir, run_id, provider_name, model_name, budget)
     frame_prompt = _prompt("document-frame-v0.1.txt")
     chunk_prompt = _prompt("chunk-extraction-v0.1.txt")
-    frame_payload = _invoke(
-        provider,
-        state,
-        call_role="document_frame",
-        system_prompt=frame_prompt,
-        user_payload={
-            "document_id": document.document_id,
-            "source_sha256": document.normalized_sha256,
-            "numbered_lines": [
-                {"line": number, "text": text} for number, text in enumerate(document.lines, start=1)
-            ],
-        },
-        max_output_tokens=config.max_output_tokens,
-    )
+    frame_source: dict[str, Any]
+    if config.reuse_document_frame_path is not None:
+        frame_path = config.reuse_document_frame_path.resolve()
+        try:
+            frame_bytes = frame_path.read_bytes()
+            frame_payload = json.loads(frame_bytes.decode("utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ExtractionError(f"reused_document_frame_invalid:{type(exc).__name__}") from exc
+        if not isinstance(frame_payload, dict):
+            raise ExtractionError("reused_document_frame_root_must_be_object")
+        frame_source = {
+            "type": "reused_validated_artifact",
+            "path": frame_path.as_posix(),
+            "sha256": _sha256_bytes(frame_bytes),
+        }
+    else:
+        frame_payload = _invoke(
+            provider,
+            state,
+            call_role="document_frame",
+            system_prompt=frame_prompt,
+            user_payload={
+                "document_id": document.document_id,
+                "source_sha256": document.normalized_sha256,
+                "numbered_lines": [
+                    {"line": number, "text": text} for number, text in enumerate(document.lines, start=1)
+                ],
+            },
+            max_output_tokens=config.max_output_tokens,
+        )
+        frame_source = {"type": "provider_call"}
     _validate_document_frame(frame_payload, document)
     _write_json(output_dir / "document-frame.json", frame_payload)
 
@@ -552,6 +978,32 @@ def run_extraction(
             },
             max_output_tokens=config.max_output_tokens,
         )
+        payload, surface_repairs = _repair_inexact_binding_surfaces(payload, chunk, document)
+        payload, binding_repairs = _repair_binding_entity_name_mismatches(payload, frame_payload, chunk)
+        payload, quote_repairs = _repair_inexact_claim_quotes(payload, chunk, document)
+        payload, relation_repairs = _repair_relation_evidence_coverage(payload, chunk)
+        payload, disposition_repairs = _drop_blank_line_dispositions(payload, chunk, document)
+        state.local_repairs.extend(surface_repairs)
+        state.local_repairs.extend(binding_repairs)
+        state.local_repairs.extend(quote_repairs)
+        state.local_repairs.extend(relation_repairs)
+        state.local_repairs.extend(disposition_repairs)
+        overflow_split_line = _deterministic_overflow_split_line(payload, chunk)
+        if overflow_split_line is not None:
+            state.local_repairs.append(
+                {
+                    "repair_type": "force_split_after_claim_overflow",
+                    "chunk_id": chunk.chunk_id,
+                    "source_lines": [chunk.start_line, chunk.end_line],
+                    "split_after_line": overflow_split_line,
+                    "discarded_claim_count": len(payload["claims"]),
+                    "provider_payload_accepted": False,
+                    "semantic_fields_changed": False,
+                }
+            )
+            left, right = _split_chunk(chunk, overflow_split_line, f"S{depth + 1}")
+            queue[0:0] = [(left, depth + 1), (right, depth + 1)]
+            continue
         _validate_chunk_payload(payload, chunk, document)
         if payload["split_required"]:
             left, right = _split_chunk(chunk, int(payload["split_after_line"]), f"S{depth + 1}")
@@ -589,7 +1041,9 @@ def run_extraction(
             "requested_model": model_name,
             "document_frame_prompt_sha256": _sha256_text(frame_prompt),
             "chunk_prompt_sha256": _sha256_text(chunk_prompt),
+            "document_frame_source": frame_source,
             "budget": budget.receipt(),
+            "local_repairs": state.local_repairs,
             "formal_database_writes": 0,
         },
     }
@@ -601,6 +1055,8 @@ def run_extraction(
     manifest["status"] = "candidate_valid" if validation.valid else "candidate_invalid"
     manifest["external_transmission_authorized"] = True
     manifest["budget_receipt"] = budget.receipt()
+    manifest["document_frame_source"] = frame_source
+    manifest["local_repairs"] = state.local_repairs
     manifest["accepted_leaf_chunks"] = [chunk.chunk_id for chunk, _ in accepted]
     _write_json(manifest_path, manifest)
     if not validation.valid:

@@ -1,6 +1,6 @@
 [project]
 name = "research-semantic-ledger"
-version = "0.3.0"
+version = "0.3.1"
 description = "Auditable extraction of atomic claims and narrative relations from long-form research documents."
 requires-python = ">=3.11"
 license = "Apache-2.0"

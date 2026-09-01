@@ -50,7 +50,7 @@ python -m research_semantic_ledger extract path/to/document.md \
   --max-calls 100
 ```
 
-The default endpoint is `https://api.deepseek.com/chat/completions`. Override it with `DEEPSEEK_BASE_URL` or `--endpoint`. The adapter requires HTTPS, requests one JSON object, uses temperature zero, and never performs an automatic retry.
+The default endpoint is `https://api.deepseek.com/chat/completions`. Override it with `DEEPSEEK_BASE_URL` or `--endpoint`. The adapter requires HTTPS, explicitly disables DeepSeek V4 thinking mode so the final JSON is returned in `message.content`, requests one JSON object, uses temperature zero, and never performs an automatic retry.
 
 To enforce a monetary ceiling, pass the current provider prices explicitly so the repository does not pretend that a stale hard-coded price is authoritative:
 
@@ -63,6 +63,31 @@ python -m research_semantic_ledger extract path/to/document.md \
 ```
 
 Every online run stores source-bearing requests and provider responses under its ignored `outputs/` directory. Do not commit that directory.
+
+If a prior run produced a valid `document-frame.json` but failed later, reuse that frozen frame without purchasing it again:
+
+```bash
+python -m research_semantic_ledger extract path/to/document.md \
+  --authorize-external-send \
+  --reuse-document-frame path/to/prior/document-frame.json
+```
+
+The reused frame is validated against the current source and its artifact hash is recorded in lineage.
+
+To resume an interrupted run without repurchasing successful calls, provide one
+or more prior run directories. A response is replayed only when the system
+prompt and canonical JSON request payload match exactly; every miss is sent to
+the configured provider as a new paid call.
+
+```bash
+python -m research_semantic_ledger extract path/to/document.md \
+  --authorize-external-send \
+  --replay-successful-calls path/to/prior/run
+```
+
+Replay calls have zero billable usage in the resumed run while preserving the
+original usage in the receipt for audit. The manifest reports replayed and
+external calls separately.
 
 ## Outputs
 

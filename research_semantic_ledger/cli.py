@@ -18,6 +18,7 @@ from .provider import (
     DEFAULT_DEEPSEEK_MODEL,
     DeepSeekProvider,
     ProviderError,
+    ReplayThenProvider,
 )
 from .rendering import render_document
 from .validation import load_and_validate_path, validate_path
@@ -147,6 +148,8 @@ def _extract(args: argparse.Namespace) -> int:
         max_cost_cny=args.max_cost_cny,
         input_price_cny_per_million=args.input_price_cny_per_million,
         output_price_cny_per_million=args.output_price_cny_per_million,
+        reuse_document_frame_path=args.reuse_document_frame,
+        replay_receipt_dirs=tuple(args.replay_successful_calls),
     )
     try:
         if args.dry_run:
@@ -176,6 +179,8 @@ def _extract(args: argparse.Namespace) -> int:
             model=args.model,
             timeout_seconds=args.timeout_seconds,
         )
+        if args.replay_successful_calls:
+            provider = ReplayThenProvider(provider, args.replay_successful_calls)
         ledger = run_extraction(
             args.path,
             output_dir,
@@ -268,6 +273,18 @@ def build_parser() -> argparse.ArgumentParser:
     extract.add_argument("--max-cost-cny", type=float)
     extract.add_argument("--input-price-cny-per-million", type=float)
     extract.add_argument("--output-price-cny-per-million", type=float)
+    extract.add_argument(
+        "--reuse-document-frame",
+        type=Path,
+        help="reuse and revalidate a prior document-frame.json instead of purchasing a new frame call",
+    )
+    extract.add_argument(
+        "--replay-successful-calls",
+        type=Path,
+        action="append",
+        default=[],
+        help="replay exact successful request hashes from a prior run directory before calling the provider",
+    )
     evaluate = commands.add_parser("evaluate", help="evaluate a validated ledger against frozen public-safe Gold")
     evaluate.add_argument("ledger", type=Path)
     evaluate.add_argument("--gold", required=True, type=Path)
